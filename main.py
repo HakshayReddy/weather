@@ -3,7 +3,10 @@ import numpy as np
 import seaborn as sns
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.optimizers import Adam
+from sklearn.model_selection import train_test_split
 
 # Load the data
 df = pd.read_csv("GlobalWeatherRepository.csv")
@@ -65,10 +68,6 @@ plt.tight_layout()
 plt.savefig(f'Distribution of Columns.png',dpi = 300)
 plt.show()
 
-# Applying log transformation on skewed features
-df['precip_mm'] = df['precip_mm'].apply(lambda x: np.log1p(x) if x > 0 else 0)
-df['cloud'] = df['cloud'].apply(lambda x: np.log1p(x) if x > 0 else 0)
-
 scaler = StandardScaler()
 df[numerical_cols] = scaler.fit_transform(df[numerical_cols])
 
@@ -84,3 +83,25 @@ plt.savefig(f'Distribution of Columns After.png',dpi = 300)
 plt.show()
 
 print(df.describe())
+
+# Create sequences for LSTM input
+def create_sequences(data,seq_length):
+    X,y = [],[]
+    for i in range(len(data) - seq_length):
+        X.append(data[i:i+seq_length]) # Sequence of past values
+        y.append(data[i+seq_length]) # Corresponding future value (all columns)
+    return np.array(X),np.array(y)
+
+# Set sequence length
+seq_length = 10
+
+# Create sequences for input (X) and target (y)
+X, y = create_sequences(df.values, seq_length)
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
+
+# Reshaping data for LSTM (samples, time_steps, features)
+X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], X_train.shape[2]))
+X_test = X_test.reshape((X_test.shape[0], X_test.shape[1], X_test.shape[2]))
+
