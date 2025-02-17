@@ -3,41 +3,22 @@ import numpy as np
 import seaborn as sns
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, Dropout
-from tensorflow.keras.optimizers import Adam
 from sklearn.model_selection import train_test_split
 
 # Load the data
-df = pd.read_csv("GlobalWeatherRepository.csv")
-df = df.drop(["timezone","last_updated_epoch","air_quality_Carbon_Monoxide","air_quality_Ozone","air_quality_Nitrogen_dioxide","air_quality_Sulphur_dioxide","air_quality_PM2.5","air_quality_PM10","air_quality_us-epa-index","air_quality_gb-defra-index","sunrise","sunset","moonrise","moonset","moon_phase","moon_illumination",
-              "gust_kph", "visibility_miles","feels_like_fahrenheit","precip_in","pressure_in","wind_mph","temperature_fahrenheit","latitude","longitude","wind_direction"],axis = 1)
+df = pd.read_csv("data.csv")
+
+print(df.head())
 
 #Indexing the data with the date 
-df['last_updated'] = pd.to_datetime(df['last_updated'], format='%Y-%m-%d %H:%M')
-df = df.rename(columns = {'last_updated' : 'date'})
-df.set_index('date', inplace=True)
-
-
-# Initialize a LabelEncoder for each column
-le_country = LabelEncoder()
-le_location_name = LabelEncoder()
-le_condition_text = LabelEncoder()
-
-# Apply Label Encoding to each categorical column
-df['country_encoded'] = le_country.fit_transform(df['country'])
-df['location_name_encoded'] = le_location_name.fit_transform(df['location_name'])
-df['condition_text_encoded'] = le_condition_text.fit_transform(df['condition_text'])
-
-# Drop the original categorical columns since they are no longer needed
-df.drop(['country', 'location_name', 'condition_text'], axis=1, inplace=True)
+df['time'] = pd.to_datetime(df['time'], format='%Y-%m-%dT%H:%M')
+df.set_index('time', inplace=True)
 
 # View the transformed dataframe columns
 print(df.columns)
 
 # Summary statistics for the numerical columns
 print(df.describe())
-
 
 # Calculate the correlation matrix
 corr_matrix = df.corr()
@@ -49,13 +30,8 @@ plt.title('Correlation Matrix')
 plt.savefig('correlations.png', dpi=300)
 plt.show()
 
-# Dropping 'gust_mph' due to its high correlation with 'wind_kph'
-df = df.drop(columns=['gust_mph'])
-
 # Visualizing distributions of numerical columns
-numerical_cols = ['temperature_celsius', 'wind_kph', 'wind_degree', 'pressure_mb', 
-                  'precip_mm', 'humidity', 'cloud', 'feels_like_celsius', 
-                  'visibility_km', 'uv_index']
+numerical_cols = df.columns.values[1:]
 
 # Plotting histograms for each numerical feature
 plt.figure(figsize=(15, 12))
