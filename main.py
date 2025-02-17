@@ -7,12 +7,13 @@ from sklearn.model_selection import train_test_split
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
+import joblib 
 
 # Load the data
 df = pd.read_csv("data.csv")
 
 #Indexing the data with the date 
-df['datetime'] = pd.to_datetime(df['datetime'], format='%d-%m-%Y %H:%M')
+df['datetime'] = pd.to_datetime(df['datetime'], format='%d-%m-%Y')
 df.set_index('datetime', inplace=True)
 
 # View the transformed dataframe columns
@@ -32,7 +33,7 @@ plt.savefig('correlations.png', dpi=300)
 plt.show()
 
 # Visualizing distributions of numerical columns
-numerical_cols = df.columns.values[1:]
+numerical_cols = ["temperature_celsius", "wind_kph", "cloud", "humidity", "precip_mm"]
 
 # Plotting histograms for each numerical feature
 plt.figure(figsize=(15, 12))
@@ -47,6 +48,9 @@ plt.show()
 
 scaler = StandardScaler()
 df[numerical_cols] = scaler.fit_transform(df[numerical_cols])
+
+joblib.dump(scaler, 'scale.pkl') 
+
 
 # Plotting histograms for each numerical feature after 
 plt.figure(figsize=(15, 12))
@@ -70,7 +74,7 @@ def create_sequences(data,seq_length):
     return np.array(X),np.array(y)
 
 # Set sequence length
-seq_length = 365*4
+seq_length = 365
 
 # Create sequences for input (X) and target (y)
 X, y = create_sequences(df.values, seq_length)
@@ -118,5 +122,9 @@ plt.ylabel('Loss')
 plt.legend()
 plt.title('Training and Validation Loss')
 plt.show()
+
+
+
+
 
 
