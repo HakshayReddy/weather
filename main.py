@@ -4,15 +4,16 @@ import seaborn as sns
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout
 
 # Load the data
 df = pd.read_csv("data.csv")
 
-print(df.head())
-
 #Indexing the data with the date 
-df['time'] = pd.to_datetime(df['time'], format='%Y-%m-%dT%H:%M')
-df.set_index('time', inplace=True)
+df['datetime'] = pd.to_datetime(df['datetime'], format='%d-%m-%Y %H:%M')
+df.set_index('datetime', inplace=True)
 
 # View the transformed dataframe columns
 print(df.columns)
@@ -69,7 +70,7 @@ def create_sequences(data,seq_length):
     return np.array(X),np.array(y)
 
 # Set sequence length
-seq_length = 10
+seq_length = 365*4
 
 # Create sequences for input (X) and target (y)
 X, y = create_sequences(df.values, seq_length)
