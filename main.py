@@ -82,3 +82,41 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle
 X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], X_train.shape[2]))
 X_test = X_test.reshape((X_test.shape[0], X_test.shape[1], X_test.shape[2]))
 
+# Early Stopping
+from tensorflow.keras.callbacks import EarlyStopping
+
+early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+
+# Define the LSTM model
+model = Sequential([
+    LSTM(50, return_sequences=True, input_shape=(seq_length, X_train.shape[2])),
+    Dropout(0.2),
+    LSTM(50, return_sequences=False),
+    Dropout(0.2),
+    Dense(25, activation='relu'),
+    Dense(X_train.shape[2])  # Output layer matches the number of features
+])
+
+# Compile the model
+model.compile(optimizer='adam', loss='mse')
+
+# Train the model
+history = model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test), callbacks=[early_stopping])
+
+
+model.save('weather_prediction_model.h5')
+
+# Evaluate the model
+loss = model.evaluate(X_test, y_test)
+print(f"Test Loss: {loss}")
+
+# Plot training history
+plt.plot(history.history['loss'], label='Train Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.title('Training and Validation Loss')
+plt.show()
+
+
