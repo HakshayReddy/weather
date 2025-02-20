@@ -57,7 +57,11 @@ def get_past_1_year_data(df, given_date):
 
 
 # Input date for prediction
-given_date = "1-06-2022"
+given_date = "30-05-2021"
+# given_date = "24-06-2021"
+# given_date = "04-05-2021"
+# given_date = "17-06-2021"
+
 
 # Fetch past 1-year data for model input
 try:
@@ -80,26 +84,48 @@ prediction_scaled = model.predict(X_test)
 # **Inverse Transform to get Actual Values**
 predicted_weather = scaler.inverse_transform(prediction_scaled)[0]  
 
-# Display results
+# # Display results
+# print(f"\nPredicted Weather for {given_date}:")
+# print(f"Temperature (°C): {predicted_weather[0]:.2f}")
+# print(f"Wind Speed (kph): {predicted_weather[1]:.2f}")
+# print(f"Cloud Cover (%): {predicted_weather[2]:.2f}")
+# print(f"Humidity (%): {predicted_weather[3]:.2f}")
+# print(f"Precipitation (mm): {predicted_weather[4]:.2f}")
+
+from sklearn.metrics import mean_absolute_percentage_error, mean_absolute_error, mean_squared_error, r2_score
+import numpy as np
+
+# Load actual weather data for the given date
+actual_weather = data.loc[data['datetime'] == given_date, features].values
+
+if actual_weather.size == 0:
+    raise ValueError(f"No actual data available for {given_date} to compute accuracy.")
+
+# Avoid division by zero for MAPE
+actual_weather[actual_weather == 0] = 1e-5  
+
+# Reshape predicted_weather to match actual_weather
+predicted_weather = predicted_weather.reshape(1, -1)
+
+# Calculate Mean Absolute Percentage Error (MAPE)
+mape = mean_absolute_percentage_error(actual_weather, predicted_weather) * 100
+
+# Calculate Mean Absolute Error (MAE)
+mae = mean_absolute_error(actual_weather, predicted_weather)
+
+# Calculate Root Mean Squared Error (RMSE)
+rmse = np.sqrt(mean_squared_error(actual_weather, predicted_weather))
+
+
+# Print results
 print(f"\nPredicted Weather for {given_date}:")
-print(f"Temperature (°C): {predicted_weather[0]:.2f}")
-print(f"Wind Speed (kph): {predicted_weather[1]:.2f}")
-print(f"Cloud Cover (%): {predicted_weather[2]:.2f}")
-print(f"Humidity (%): {predicted_weather[3]:.2f}")
-print(f"Precipitation (mm): {predicted_weather[4]:.2f}")
+print(f"Temperature (°C): {predicted_weather[0][0]:.2f}")
+print(f"Wind Speed (kph): {predicted_weather[0][1]:.2f}")
+print(f"Cloud Cover (%): {predicted_weather[0][2]:.2f}")
+print(f"Humidity (%): {predicted_weather[0][3]:.2f}")
+print(f"Precipitation (mm): {predicted_weather[0][4]:.2f}")
 
-
-# Plot past 1 year data for temperature
-plt.figure(figsize=(10, 5))
-plt.plot(past_data.index[-365:], past_data["temperature_celsius"][-365:], label="Past 1 Year Temperature", marker='o')
-
-# Plot predicted temperature
-plt.scatter([pd.to_datetime(given_date, format='%d-%m-%Y', errors='coerce')], [predicted_weather[0]], color="red", label="Predicted Temperature", marker="s")
-
-plt.xlabel("Date")
-plt.ylabel("Temperature (°C)")
-plt.title(f"Weather Prediction for {given_date}")
-plt.legend()
-plt.xticks(rotation=45)
-plt.show()
+print("\n**Performance Metrics:**")
+print(f"Mean Absolute Error (MAE): {mae:.2f}")
+print(f"Root Mean Squared Error (RMSE): {rmse:.2f}")
 
