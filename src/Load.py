@@ -58,19 +58,28 @@ def predict_weather(given_date):
 
         lstm_output = scaler.inverse_transform(lstm_prediction_scaled)
 
+        print("\nLSTM Model Prediction is \n")
+        for feature, value in zip(features, lstm_output[0]):
+            print(f"{feature}: {value:.2f}")   
+
         rf_model = joblib.load("pkl//random_forest_model.pkl")
 
         final_prediction = rf_model.predict(lstm_output)
         
-        print("\nFinal Hybrid Model Prediction for", given_date)
+        print("\nFinal Hybrid Model Prediction for", given_date,"\n")
         for feature, value in zip(features, final_prediction[0]):
             print(f"{feature}: {value:.2f}")
         
-        actual_weather = data.loc[data['datetime'] == given_date, features].values    
+        actual_weather = data.loc[data['datetime'] == given_date, features].values 
+        
+        print("\nActual Data for", given_date,"\n")
+        for feature, value in zip(features, actual_weather[0]):
+            print(f"{feature}: {value:.2f}")   
+            
         mae = mean_absolute_error(actual_weather, final_prediction)
         rmse = np.sqrt(mean_squared_error(actual_weather, final_prediction))
 
-        print(f"Mean Absolute Error (MAE): {mae:.2f}")
+        print(f"\nMean Absolute Error (MAE): {mae:.2f}")
         print(f"Root Mean Squared Error (RMSE): {rmse:.2f}")
         
     except ValueError as e:
@@ -90,7 +99,7 @@ def train_hybrid_model():
 
     print("Hybrid Model Trained Successfully.")
 
-# train_hybrid_model()
+train_hybrid_model()
 
 predict_weather("19-01-2025")
 

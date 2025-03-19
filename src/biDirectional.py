@@ -52,7 +52,7 @@ model.compile(optimizer='adam', loss='mse')
 
 history = model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test), callbacks=[early_stopping])
 
-model.save('h5//bilstm_weather_model.h5')
+model.save('h5//bilstm_weather_model_1.h5')
 
 loss = model.evaluate(X_test, y_test)
 print(f"Test Loss: {loss}")
@@ -64,3 +64,4 @@ plt.ylabel('Loss')
 plt.legend()
 plt.title('Training and Validation Loss')
 plt.show()
+plt.savefig('images/biLstm_training.png')
