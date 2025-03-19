@@ -92,7 +92,8 @@ def train_hybrid_model():
 
 # train_hybrid_model()
 
-predict_weather("19-01-2025")
+predict_weather("01-01-2025")
+# predict_weather("19-01-2025")
 
 
 
