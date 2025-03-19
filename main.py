@@ -122,9 +122,3 @@ plt.ylabel('Loss')
 plt.legend()
 plt.title('Training and Validation Loss')
 plt.show()
-
-
-
-
-
-
