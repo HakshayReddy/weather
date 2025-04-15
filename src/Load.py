@@ -1,10 +1,11 @@
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 import joblib
 from tensorflow.keras.models import load_model
 from sklearn.ensemble import RandomForestRegressor
 import tensorflow.keras.losses
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 data = pd.read_csv("data//data.csv")
 data['datetime'] = pd.to_datetime(data['datetime'], format='%d-%m-%Y', errors='coerce')
@@ -99,9 +100,120 @@ def train_hybrid_model():
 
     print("Hybrid Model Trained Successfully.")
 
-train_hybrid_model()
+
+def evaluate_hybrid_model_from_saved_data(model_bilstm_path, rf_model_path, scaler_path, feature_names):
+    # Load saved X_test and y_test
+    X_test = np.load('npy/X_test.npy')
+    y_test = np.load('npy/y_test.npy')
+
+    # Load models and scaler
+    model_bilstm = load_model(model_bilstm_path, custom_objects={'mse': tf.keras.losses.MeanSquaredError()})
+    rf_model = joblib.load(rf_model_path)
+    scaler = joblib.load(scaler_path)
+    
+    # LSTM prediction (scaled)
+    lstm_predictions_scaled = model_bilstm.predict(X_test)
+    
+    # Inverse transform predictions and actual values
+    lstm_predictions = scaler.inverse_transform(lstm_predictions_scaled)
+    y_test_actual = scaler.inverse_transform(y_test)
+
+    # Hybrid prediction via Random Forest
+    hybrid_predictions = rf_model.predict(lstm_predictions)
+
+    print("\n🔎 Evaluation Metrics for Hybrid LSTM + Random Forest Model:\n")
+
+    overall_mae = mean_absolute_error(y_test_actual, hybrid_predictions)
+    overall_rmse = np.sqrt(mean_squared_error(y_test_actual, hybrid_predictions))
+    overall_r2 = r2_score(y_test_actual, hybrid_predictions)
+
+    print(f"✅ Overall MAE  : {overall_mae:.4f}")
+    print(f"✅ Overall RMSE : {overall_rmse:.4f}")
+    print(f"✅ Overall R²   : {overall_r2:.4f}")
+
+    print("\n📊 Per Feature Metrics:")
+    for i, feature in enumerate(feature_names):
+        y_true = y_test_actual[:, i]
+        y_pred = hybrid_predictions[:, i]
+
+        mae = mean_absolute_error(y_true, y_pred)
+        rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+        r2 = r2_score(y_true, y_pred)
+
+        print(f"\n🔸 {feature}")
+        print(f"   • MAE  : {mae:.4f}")
+        print(f"   • RMSE : {rmse:.4f}")
+        print(f"   • R²   : {r2:.4f}")
+        
+
+def evaluate_bilstm_model(model_path, scaler_path, feature_names):
+    """
+    Evaluates the BiLSTM model independently on the saved test data.
+
+    Parameters:
+    - model_path: Path to the BiLSTM model (.h5)
+    - scaler_path: Path to the saved StandardScaler (.pkl)
+    - feature_names: List of feature names for evaluation
+
+    Outputs:
+    - MAE, RMSE, and R² scores overall and per feature
+    """
+    # Load test data
+    X_test = np.load('npy/X_test.npy')
+    y_test = np.load('npy/y_test.npy')
+
+    # Load model and scaler
+    model = load_model(model_path, custom_objects={'mse': tf.keras.losses.MeanSquaredError()})
+    scaler = joblib.load(scaler_path)
+
+    # Predict using BiLSTM
+    y_pred_scaled = model.predict(X_test)
+
+    # Inverse transform predictions and actuals to original scale
+    y_pred = scaler.inverse_transform(y_pred_scaled)
+    y_true = scaler.inverse_transform(y_test)
+
+    print("\n🔍 Evaluation Metrics for BiLSTM Model (Without Hybrid):\n")
+
+    # Overall metrics
+    overall_mae = mean_absolute_error(y_true, y_pred)
+    overall_rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+    overall_r2 = r2_score(y_true, y_pred)
+
+    print(f"✅ Overall MAE  : {overall_mae:.4f}")
+    print(f"✅ Overall RMSE : {overall_rmse:.4f}")
+    print(f"✅ Overall R²   : {overall_r2:.4f}")
+
+    print("\n📊 Per Feature Metrics:")
+    for i, feature in enumerate(feature_names):
+        mae = mean_absolute_error(y_true[:, i], y_pred[:, i])
+        rmse = np.sqrt(mean_squared_error(y_true[:, i], y_pred[:, i]))
+        r2 = r2_score(y_true[:, i], y_pred[:, i])
+
+        print(f"\n🔸 {feature}")
+        print(f"   • MAE  : {mae:.4f}")
+        print(f"   • RMSE : {rmse:.4f}")
+        print(f"   • R²   : {r2:.4f}")
+        
+        
+# train_hybrid_model()
 
 predict_weather("19-01-2025")
+
+evaluate_bilstm_model(
+    model_path='h5//bilstm_weather_model.h5',
+    scaler_path='pkl//scale.pkl',
+    feature_names=["temperature_celsius", "wind_kph", "cloud", "humidity", "precip_mm"]
+)
+
+
+evaluate_hybrid_model_from_saved_data(
+    model_bilstm_path='h5//bilstm_weather_model.h5',
+    rf_model_path='pkl//random_forest_model.pkl',
+    scaler_path='pkl//scale.pkl',
+    feature_names=["temperature_celsius", "wind_kph", "cloud", "humidity", "precip_mm"]
+)
+
 
 
 

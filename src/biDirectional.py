@@ -36,6 +36,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle
 X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], X_train.shape[2]))
 X_test = X_test.reshape((X_test.shape[0], X_test.shape[1], X_test.shape[2]))
 
+np.save('npy/X_test.npy', X_test)
+np.save('npy/y_test.npy', y_test)
 from tensorflow.keras.callbacks import EarlyStopping
 
 early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
@@ -47,6 +49,8 @@ model = Sequential([
     Dense(25, activation='relu'),
     Dense(X_train.shape[2])  
 ])
+
+
 
 model.compile(optimizer='adam', loss='mse')
 
